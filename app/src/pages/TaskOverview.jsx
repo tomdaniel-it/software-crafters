@@ -1,68 +1,77 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useContext, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-const tasks = [
-  {
-    id: 2,
-    title: 'Connect Firebase to our app',
-    finished: false,
-  },
-  {
-    id: 1,
-    title: 'Create basic React app',
-    finished: true,
-  }
-];
+import { useCollection } from 'react-firebase-hooks/firestore';
+import { AuthContext } from '../contexts/AuthContext';
+import { addDoc, collection, deleteDoc, doc, orderBy, query, updateDoc } from 'firebase/firestore';
+import { db } from '../utils/firebase';
 
 function TaskOverview() {
     const taskInput = useRef();
     const navigate = useNavigate();
+    const { logout: authLogout } = useContext(AuthContext);
+
+    const [tasksCollection, isLoading] = useCollection(query(
+      collection(db, '/tasks'),
+      orderBy('finished', 'asc'),
+      orderBy('createdAt', 'desc')
+    ));
+
+    const tasks = tasksCollection?.docs;
   
     const addTask = useCallback(() => {
       const title = taskInput.current.value;
       if (!title?.trim()) return;
 
-      // TODO: Add task to firestore
-  
-      taskInput.current.value = '';
+      addDoc(collection(db, '/tasks'), {
+        title,
+        finished: false,
+        createdAt: Date.now(),
+      }).then(() => {
+        taskInput.current.value = '';
+      });
     }, [taskInput]);
   
     const updateTask = (taskId, isFinished) => {
-      // TODO: Update task to firestore
+      updateDoc(doc(db, '/tasks', taskId), {
+        finished: isFinished
+      }).catch(err => alert(err));
     };
   
     const deleteTask = (taskId) => {
-      // TODO: Delete task in firestore
+      deleteDoc(doc(db, '/tasks', taskId));
     };
 
     const logout = () => {
-      // TODO: Log out firestore auth
-
-      navigate('/login');
+      authLogout().then(() => {
+        navigate('/login');
+      });
     }
   
     return (
         <>
             <button className='bg-gray-300 px-2 py-1 rounded mb-5' onClick={logout}>Logout</button>
             <div className='taskContainer'>
-                {tasks?.map(task => {
+                {!isLoading && tasks?.map(task => {
+                  const taskId = task.id;
+                  const taskData = task.data();
+
                   return (
-                    <div key={task.id} className='task w-full flex mb-4 p-5 bg-gray-200 inline-block rounded'>
+                    <div key={taskId} className='task w-full flex mb-4 p-5 bg-gray-200 inline-block rounded'>
                       <div className='flex-grow'>
-                          <span className='align-middle'>{task.title}</span>
+                          <span className='align-middle'>{taskData.title}</span>
                       </div>
                       {
-                          task.finished
+                          taskData.finished
                           ? <span
                               className='bg-green-300 px-2 py-1 cursor-pointer hover:bg-green-400 rounded'
-                              onClick={() => updateTask(task.id, false)}
+                              onClick={() => updateTask(taskId, false)}
                               >DONE</span>
                           : <span
                               className='bg-orange-300 px-2 py-1 cursor-pointer hover:bg-orange-400 rounded'
-                              onClick={() => updateTask(task.id, true)}
+                              onClick={() => updateTask(taskId, true)}
                               >TODO</span>
                       }
-                      <button className='ml-3 align-middle' onClick={() => deleteTask(task.id)}>x</button>
+                      <button className='ml-3 align-middle' onClick={() => deleteTask(taskId)}>x</button>
                     </div>
                   );
                 })}

@@ -1,10 +1,14 @@
+import { useContext } from "react";
 import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../contexts/AuthContext";
 
 function Login() {
     const navigate = useNavigate();
+    const { getGoogleCredentials } = useContext(AuthContext);
 
     const login = async () => {
-        // TODO: Login
+        await getGoogleCredentials();
+        navigate('/tasks');
     }
 
     return (

@@ -1,4 +1,6 @@
 import { createContext, useState } from "react";
+import { auth } from "../utils/firebase";
+import { GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
 
 export const AuthContext = createContext({
     user: null,
@@ -11,12 +13,13 @@ export const AuthContextProvider = ({ children }) => {
 	const [user, setUser] = useState(null);
 
     const getGoogleCredentials = async () => {
-        // TODO: Sign in with google
-        // TODO: setUser with correct user object
+        const provider = new GoogleAuthProvider();
+        const credentials = await signInWithPopup(auth, provider);
+        setUser(credentials.user);
 	};
 
     const logout = async () => {
-        // TODO: Sign out from firebase
+        await signOut(auth);
     }
 
     return (
