@@ -1,20 +1,11 @@
-import { useContext, useEffect } from "react";
-import { AuthContext } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 
 function Login() {
-    const { getGoogleCredentials, user } = useContext(AuthContext);
     const navigate = useNavigate();
 
     const login = async () => {
-        await getGoogleCredentials();
+        // TODO: Login
     }
-
-    useEffect(() => {
-        if (!!user) {
-            navigate('/tasks');
-        }
-    }, [user, navigate]);
 
     return (
         <div className="text-center">
